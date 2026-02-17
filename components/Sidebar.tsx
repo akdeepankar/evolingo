@@ -1,8 +1,10 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Bookmark } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
+import { supabase } from '@/lib/supabaseClient';
+import { toast } from 'sonner';
 
 interface SidebarProps {
     data: any;
@@ -12,7 +14,28 @@ interface SidebarProps {
 
 export default function Sidebar({ data, currentYear = 2024, onYearSelect }: SidebarProps) {
     const [isMinimized, setIsMinimized] = useState(false);
+    const [isSaved, setIsSaved] = useState(false);
     const activeRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        checkIfSaved();
+    }, [data]);
+
+    const checkIfSaved = async () => {
+        if (!data) return;
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        const { data: existing } = await supabase
+            .from('saved_words')
+            .select('id')
+            .eq('user_id', user.id)
+            .eq('word_data->current->>word', data.current.word)
+            .eq('word_data->current->>language', data.current.language)
+            .maybeSingle();
+
+        setIsSaved(!!existing);
+    };
 
     useEffect(() => {
         if (activeRef.current) {
@@ -33,6 +56,44 @@ export default function Sidebar({ data, currentYear = 2024, onYearSelect }: Side
     const handleClick = (year?: number) => {
         if (year !== undefined && onYearSelect) {
             onYearSelect(year);
+        }
+    };
+
+    const saveWordData = async () => {
+        if (!data) return;
+
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+            toast.error('You must be signed in to save words');
+            return;
+        }
+
+        if (isSaved) {
+            const { error } = await supabase
+                .from('saved_words')
+                .delete()
+                .eq('user_id', user.id)
+                .eq('word_data->current->>word', data.current.word)
+                .eq('word_data->current->>language', data.current.language);
+
+            if (error) {
+                toast.error('Failed to remove word');
+            } else {
+                setIsSaved(false);
+                toast.success('Removed from collection');
+            }
+        } else {
+            const { error } = await supabase.from('saved_words').insert({
+                user_id: user.id,
+                word_data: data
+            });
+
+            if (error) {
+                toast.error('Failed to save word');
+            } else {
+                setIsSaved(true);
+                toast.success('Saved to collection!');
+            }
         }
     };
 
@@ -61,14 +122,27 @@ export default function Sidebar({ data, currentYear = 2024, onYearSelect }: Side
 
                 {/* Fixed Current Word Info */}
                 <div
-                    onClick={() => handleClick(data.current.year)}
                     ref={isCurrent(data.current.year ?? 2024) ? activeRef : null}
-                    className={`p-6 border-b border-white/10 cursor-pointer transition-all duration-300 shrink-0 ${isActive(data.current.year ?? 2024) ? 'opacity-100' : 'opacity-50'} ${isCurrent(data.current.year ?? 2024) ? 'bg-blue-500/20 border-l-4 border-l-blue-400' : ''}`}
+                    className={`p-6 border-b border-white/10 relative transition-all duration-300 shrink-0 ${isActive(data.current.year ?? 2024) ? 'opacity-100' : 'opacity-50'} ${isCurrent(data.current.year ?? 2024) ? 'bg-blue-500/20 border-l-4 border-l-blue-400' : ''}`}
                 >
-                    <div className="text-xs font-mono uppercase text-blue-400 mb-2 tracking-widest">Current</div>
-                    <div className="text-4xl font-bold text-white font-serif mb-1">{data.current.word}</div>
-                    <div className="text-sm text-white/60 mb-2">{data.current.language} {data.current.year ? `(${data.current.year})` : ''}</div>
-                    <div className="text-base text-white/80 italic">"{data.current.meaning}"</div>
+                    <div className="flex justify-between items-start mb-2">
+                        <div className="text-xs font-mono uppercase text-blue-400 tracking-widest">Current</div>
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                saveWordData();
+                            }}
+                            className={`p-2 rounded-lg transition-all ${isSaved ? 'bg-blue-600/20 text-blue-400' : 'hover:bg-white/10 text-white/40 hover:text-blue-400'}`}
+                            title={isSaved ? "Remove from Collection" : "Save to Collection"}
+                        >
+                            <Bookmark className={`w-4 h-4 ${isSaved ? 'fill-current' : ''}`} />
+                        </button>
+                    </div>
+                    <div onClick={() => handleClick(data.current.year)} className="cursor-pointer">
+                        <div className="text-4xl font-bold text-white font-serif mb-1">{data.current.word}</div>
+                        <div className="text-sm text-white/60 mb-2">{data.current.language} {data.current.year ? `(${data.current.year})` : ''}</div>
+                        <div className="text-base text-white/80 italic">"{data.current.meaning}"</div>
+                    </div>
                 </div>
 
                 {/* Scrollable Evolution Path */}

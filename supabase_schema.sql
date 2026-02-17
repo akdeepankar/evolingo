@@ -1,12 +1,22 @@
 -- Enable UUID extension
 create extension if not exists "uuid-ossp";
 
+-- Reset Schema (Start Fresh)
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+DROP FUNCTION IF EXISTS public.handle_new_user();
+DROP TABLE IF EXISTS messages CASCADE;
+DROP TABLE IF EXISTS group_members CASCADE;
+DROP TABLE IF EXISTS groups CASCADE;
+DROP TABLE IF EXISTS profiles CASCADE;
+
 -- Table: profiles
 -- Stores user profiles. Automatically managed via Supabase Auth when a user signs up.
 create table profiles (
   id uuid references auth.users not null primary key,
   email text,
   username text,
+  display_name text,
+  avatar_url text,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
@@ -82,8 +92,14 @@ create policy "Members can insert messages in their group." on messages for inse
 create or replace function public.handle_new_user()
 returns trigger as $$
 begin
-  insert into public.profiles (id, email, username)
-  values (new.id, new.email, new.raw_user_meta_data->>'username');
+  insert into public.profiles (id, email, username, display_name, avatar_url)
+  values (
+    new.id, 
+    new.email, 
+    new.raw_user_meta_data->>'username',
+    new.raw_user_meta_data->>'display_name',
+    new.raw_user_meta_data->>'avatar_url'
+  );
   return new;
 end;
 $$ language plpgsql security definer;
@@ -92,3 +108,22 @@ $$ language plpgsql security definer;
 create trigger on_auth_user_created
   after insert on auth.users
   for each row execute procedure public.handle_new_user();
+
+-- Table: saved_words
+-- Allows users to save etymology search results (shared words) for later viewing.
+create table saved_words (
+  id uuid default uuid_generate_v4() primary key,
+  user_id uuid references profiles(id) on delete cascade not null,
+  word_data jsonb not null,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+alter table saved_words enable row level security;
+create policy "Users can view their own saved words." on saved_words for select using (auth.uid() = user_id);
+create policy "Users can save words." on saved_words for insert with check (auth.uid() = user_id);
+create policy "Users can delete saved words." on saved_words for delete using (auth.uid() = user_id);
+
+-- Enable Realtime for Messages
+-- This allows the ChatRoom to receive new messages instantly without refreshing.
+alter publication supabase_realtime add table messages;
+

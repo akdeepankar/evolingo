@@ -3,7 +3,7 @@ import { supabase } from '@/lib/supabaseClient';
 import { useState, useEffect } from 'react';
 import { Trash2, LogOut, Plus, Search, ChevronRight } from 'lucide-react';
 
-export default function GroupManager({ onGroupSelected }: { onGroupSelected: (groupId: string) => void }) {
+export default function GroupManager({ onGroupSelected }: { onGroupSelected: (group: any) => void }) {
     const [view, setView] = useState<'list' | 'create' | 'join'>('list');
     const [groups, setGroups] = useState<any[]>([]);
     const [name, setName] = useState('');
@@ -129,7 +129,7 @@ export default function GroupManager({ onGroupSelected }: { onGroupSelected: (gr
                                         <p className="text-[10px] text-white/50 font-mono">Code: {group.join_code}</p>
                                     </div>
                                     <button
-                                        onClick={() => onGroupSelected(group.id)}
+                                        onClick={() => onGroupSelected(group)}
                                         className="bg-blue-600/20 text-blue-300 p-1.5 rounded-full hover:bg-blue-600 hover:text-white transition-all"
                                     >
                                         <ChevronRight className="w-4 h-4" />

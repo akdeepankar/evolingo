@@ -1,20 +1,38 @@
 'use client';
 
-import { Search, Loader2, Settings, MessageSquare } from 'lucide-react';
+import { Search, Loader2, Settings, MessageSquare, LogOut, Bookmark } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { supabase } from '@/lib/supabaseClient';
+import { toast } from 'sonner';
 
 interface ActionPanelProps {
     onSearch: (term: string) => void;
     onOpenSettings: () => void;
+    onOpenCollection: () => void;
     onToggleChat: () => void;
     onLogoClick?: () => void;
     isCompact?: boolean;
     isLoading?: boolean;
 }
 
-export default function ActionPanel({ onSearch, onOpenSettings, onToggleChat, onLogoClick, isCompact = false, isLoading = false }: ActionPanelProps) {
+export default function ActionPanel({ onSearch, onOpenSettings, onOpenCollection, onToggleChat, onLogoClick, isCompact = false, isLoading = false }: ActionPanelProps) {
     const [term, setTerm] = useState('');
+    const [user, setUser] = useState<any>(null);
+
+    useEffect(() => {
+        supabase.auth.getUser().then(({ data }) => setUser(data.user));
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+            setUser(session?.user ?? null);
+        });
+        return () => subscription.unsubscribe();
+    }, []);
+
+    const handleSignOut = async () => {
+        const { error } = await supabase.auth.signOut();
+        if (error) toast.error(error.message);
+        else toast.success('Signed out successfully');
+    };
 
     useEffect(() => {
         if (!isCompact) {
@@ -77,9 +95,27 @@ export default function ActionPanel({ onSearch, onOpenSettings, onToggleChat, on
                         <button onClick={onToggleChat} className="p-2 rounded-full hover:bg-white/10 text-white/70 hover:text-white transition-colors">
                             <MessageSquare className="w-5 h-5" />
                         </button>
+                        {user && (
+                            <button
+                                onClick={onOpenCollection}
+                                className="p-2 rounded-full hover:bg-white/10 text-white/70 hover:text-white transition-colors"
+                                title="My Collection"
+                            >
+                                <Bookmark className="w-5 h-5" />
+                            </button>
+                        )}
                         <button onClick={onOpenSettings} className="p-2 rounded-full hover:bg-white/10 text-white/70 hover:text-white transition-colors">
                             <Settings className="w-5 h-5" />
                         </button>
+                        {user && (
+                            <button
+                                onClick={handleSignOut}
+                                className="p-2 rounded-full hover:bg-red-500/10 text-white/30 hover:text-red-500 transition-all ml-2"
+                                title="Sign Out"
+                            >
+                                <LogOut className="w-5 h-5" />
+                            </button>
+                        )}
                     </motion.div>
                 </motion.div>
             ) : (
@@ -99,9 +135,27 @@ export default function ActionPanel({ onSearch, onOpenSettings, onToggleChat, on
                         <button onClick={onToggleChat} className="p-2 rounded-full hover:bg-white/10 text-white/70 hover:text-white transition-colors">
                             <MessageSquare className="w-5 h-5" />
                         </button>
+                        {user && (
+                            <button
+                                onClick={onOpenCollection}
+                                className="p-2 rounded-full hover:bg-white/10 text-white/70 hover:text-white transition-colors"
+                                title="My Collection"
+                            >
+                                <Bookmark className="w-5 h-5" />
+                            </button>
+                        )}
                         <button onClick={onOpenSettings} className="p-2 rounded-full hover:bg-white/10 text-white/70 hover:text-white transition-colors">
                             <Settings className="w-5 h-5" />
                         </button>
+                        {user && (
+                            <button
+                                onClick={handleSignOut}
+                                className="p-2 rounded-full hover:bg-red-500/10 text-white/30 hover:text-red-500 transition-all ml-2"
+                                title="Sign Out"
+                            >
+                                <LogOut className="w-5 h-5" />
+                            </button>
+                        )}
                     </motion.div>
 
                     {/* Center Content */}

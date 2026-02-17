@@ -8,6 +8,7 @@ import Settings from '@/components/Settings';
 import Sidebar from '@/components/Sidebar';
 import FuturePrediction from '@/components/results/FuturePrediction';
 import ChatSidebar from '@/components/chat/ChatSidebar';
+import SavedCollection from '@/components/chat/SavedCollection';
 
 export default function Home() {
   const [year, setYear] = useState(2024);
@@ -22,6 +23,7 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [showCollection, setShowCollection] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(false);
 
   // Playback Logic
@@ -54,6 +56,63 @@ export default function Home() {
     setIsPlaying(!isPlaying);
   };
 
+  const processWordData = (data: any) => {
+    setSearchResult(data);
+    const newMarkers: any[] = [];
+    const uniqueYears = new Set<number>();
+
+    if (data.root) {
+      if (data.root.location) {
+        newMarkers.push({
+          ...data.root.location,
+          label: data.root.language,
+          year: data.root.year,
+          word: data.root.word,
+          country_code: data.root.location.country_code
+        });
+      }
+      if (data.root.year) uniqueYears.add(data.root.year);
+    }
+
+    if (data.path) {
+      data.path.forEach((step: any) => {
+        if (step.location) {
+          newMarkers.push({
+            ...step.location,
+            label: step.language,
+            year: step.year,
+            word: step.word,
+            country_code: step.location.country_code
+          });
+        }
+        if (step.year) uniqueYears.add(step.year);
+      });
+    }
+
+    if (data.current) {
+      if (data.current.location) {
+        newMarkers.push({
+          ...data.current.location,
+          label: data.current.language,
+          year: data.current.year,
+          word: data.current.word,
+          country_code: data.current.location.country_code
+        });
+      }
+      if (data.current.year) uniqueYears.add(data.current.year);
+    }
+
+    const sortedSteps = Array.from(uniqueYears).sort((a, b) => a - b);
+    setTimelineSteps(sortedSteps);
+    setMarkers(newMarkers);
+    if (sortedSteps.length > 0) {
+      setYear(sortedSteps[0]);
+      setIsPlaying(true);
+      setTimelineRange({ min: sortedSteps[0], max: sortedSteps[sortedSteps.length - 1] });
+    }
+    setHasSearched(true);
+  };
+
   const handleSearch = async (term: string) => {
     console.log(`Searching for: ${term}`);
 
@@ -63,7 +122,6 @@ export default function Home() {
     setMarkers([]);
     setTimelineRange(null);
     setTimelineSteps([]);
-    // Reset year to minimum to prevent flashing next results
     setYear(-5000);
     setIsLoading(true);
     setHasSearched(true);
@@ -71,7 +129,6 @@ export default function Home() {
     const openaiKey = localStorage.getItem('openai_api_key');
 
     try {
-      // Fetch Etymology
       const etymologyRes = await fetch('/api/etymology', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -80,73 +137,11 @@ export default function Home() {
 
       if (etymologyRes.ok) {
         const etymologyData = await etymologyRes.json();
-        setSearchResult(etymologyData);
-
-        // Process markers and timeline from etymology data
-        const newMarkers = [];
-        let minYear = 2024;
-        const maxYear = 2024;
-
-        if (etymologyData.root) {
-          if (etymologyData.root.location) {
-            newMarkers.push({
-              ...etymologyData.root.location,
-              label: etymologyData.root.language,
-              year: etymologyData.root.year, // Add year! 
-              word: etymologyData.root.word // Add word!
-            });
-          }
-          if (etymologyData.root.year) minYear = Math.min(minYear, etymologyData.root.year);
-        }
-
-        const uniqueYears = new Set<number>();
-        if (etymologyData.root?.year) uniqueYears.add(etymologyData.root.year);
-
-        if (etymologyData.path) {
-          etymologyData.path.forEach((step: any) => {
-            if (step.location) {
-              newMarkers.push({
-                ...step.location,
-                label: step.language,
-                year: step.year, // Add year!
-                word: step.word // Add word!
-              });
-            }
-            if (step.year) uniqueYears.add(step.year);
-          });
-        }
-
-        if (etymologyData.current) {
-          if (etymologyData.current.location) {
-            newMarkers.push({
-              ...etymologyData.current.location,
-              label: etymologyData.current.language,
-              year: etymologyData.current.year, // Add year!
-              word: etymologyData.current.word // Add word!
-            });
-          }
-          if (etymologyData.current.year) uniqueYears.add(etymologyData.current.year);
-        }
-
-        const sortedSteps = Array.from(uniqueYears).sort((a, b) => a - b);
-
-        // Critical: Update year and steps BEFORE markers to prevent "flash of all content"
-        // if the previous year was 2024.
-        setTimelineSteps(sortedSteps);
-        if (sortedSteps.length > 0) {
-          setYear(sortedSteps[0]);
-          setIsPlaying(true);
-        }
-
-        // Now set markers, which will use the newly set Correct Year
-        setMarkers(newMarkers);
-        setTimelineRange({ min: sortedSteps[0], max: sortedSteps[sortedSteps.length - 1] });
-
+        processWordData(etymologyData);
       } else {
         console.error("Etymology fetch failed");
       }
 
-      // Fetch Prediction (mocking 2050 for now as default future)
       const predictionRes = await fetch('/api/predict', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -193,6 +188,7 @@ export default function Home() {
             isCompact={hasSearched}
             isLoading={isLoading}
             onOpenSettings={() => setShowSettings(true)}
+            onOpenCollection={() => setShowCollection(true)}
             onToggleChat={() => setIsChatOpen(!isChatOpen)}
             onLogoClick={() => {
               setHasSearched(false);
@@ -222,6 +218,7 @@ export default function Home() {
               steps={timelineSteps}
               isPlaying={isPlaying}
               onTogglePlay={togglePlay}
+              isChatOpen={isChatOpen}
             />
           )}
         </div>
@@ -231,67 +228,13 @@ export default function Home() {
         isOpen={isChatOpen}
         onClose={() => setIsChatOpen(false)}
         currentWordData={searchResult}
-        onLoadSharedWord={(data) => {
-          // Load shared data into state
-          setSearchResult(data);
+        onLoadSharedWord={processWordData}
+      />
 
-          // Reconstruct markers/timeline logic
-          const newMarkers = [];
-          let minYear = 2024;
-
-          if (data.root) {
-            if (data.root.location) {
-              newMarkers.push({
-                ...data.root.location,
-                label: data.root.language,
-                year: data.root.year,
-                word: data.root.word,
-                country_code: data.root.location.country_code
-              });
-            }
-          }
-
-          const uniqueYears = new Set<number>();
-          if (data.root?.year) uniqueYears.add(data.root.year);
-
-          if (data.path) {
-            data.path.forEach((step: any) => {
-              if (step.location) {
-                newMarkers.push({
-                  ...step.location,
-                  label: step.language,
-                  year: step.year,
-                  word: step.word,
-                  country_code: step.location.country_code
-                });
-              }
-              if (step.year) uniqueYears.add(step.year);
-            });
-          }
-
-          if (data.current) {
-            if (data.current.location) {
-              newMarkers.push({
-                ...data.current.location,
-                label: data.current.language,
-                year: data.current.year,
-                word: data.current.word,
-                country_code: data.current.location.country_code
-              });
-            }
-            if (data.current.year) uniqueYears.add(data.current.year);
-          }
-
-          const sortedSteps = Array.from(uniqueYears).sort((a, b) => a - b);
-          setTimelineSteps(sortedSteps);
-          setMarkers(newMarkers);
-          if (sortedSteps.length > 0) {
-            setYear(sortedSteps[0]);
-            setIsPlaying(true);
-            setTimelineRange({ min: sortedSteps[0], max: sortedSteps[sortedSteps.length - 1] });
-          }
-          setHasSearched(true);
-        }}
+      <SavedCollection
+        isOpen={showCollection}
+        onClose={() => setShowCollection(false)}
+        onViewWord={processWordData}
       />
     </main>
   );

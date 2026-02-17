@@ -9,9 +9,10 @@ interface TimelineProps {
     steps: number[];
     isPlaying: boolean;
     onTogglePlay: () => void;
+    isChatOpen?: boolean;
 }
 
-export default function Timeline({ year, setYear, steps, isPlaying, onTogglePlay }: TimelineProps) {
+export default function Timeline({ year, setYear, steps, isPlaying, onTogglePlay, isChatOpen }: TimelineProps) {
     if (!steps || steps.length === 0) return null;
 
     const currentIndex = steps.indexOf(year);
@@ -25,7 +26,11 @@ export default function Timeline({ year, setYear, steps, isPlaying, onTogglePlay
     };
 
     return (
-        <div className="fixed bottom-6 right-6 w-full max-w-md z-50 animate-in slide-in-from-bottom-5 fade-in duration-500">
+        <div
+            className={`fixed bottom-6 z-50 transition-all duration-500 ease-in-out w-full max-w-md px-4 
+                ${isChatOpen ? 'left-1/2 -translate-x-1/2 md:translate-x-[calc(-50%-175px)]' : 'right-0 md:right-6'} 
+                animate-in slide-in-from-bottom-5 fade-in`}
+        >
             {/* Main Controller Card */}
             <div className="bg-black/60 backdrop-blur-xl border border-white/10 rounded-xl p-4 shadow-2xl flex flex-col gap-3">
 
