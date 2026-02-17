@@ -7,6 +7,7 @@ import ActionPanel from '@/components/ActionPanel';
 import Settings from '@/components/Settings';
 import Sidebar from '@/components/Sidebar';
 import FuturePrediction from '@/components/results/FuturePrediction';
+import ChatSidebar from '@/components/chat/ChatSidebar';
 
 export default function Home() {
   const [year, setYear] = useState(2024);
@@ -21,6 +22,7 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [isChatOpen, setIsChatOpen] = useState(false);
 
   // Playback Logic
   useEffect(() => {
@@ -191,6 +193,15 @@ export default function Home() {
             isCompact={hasSearched}
             isLoading={isLoading}
             onOpenSettings={() => setShowSettings(true)}
+            onToggleChat={() => setIsChatOpen(!isChatOpen)}
+            onLogoClick={() => {
+              setHasSearched(false);
+              setSearchResult(null);
+              setYear(2024);
+              setIsPlaying(false);
+              setTimelineSteps([]);
+              setMarkers([]);
+            }}
           />
         </div>
 
@@ -215,6 +226,73 @@ export default function Home() {
           )}
         </div>
       </div>
+
+      <ChatSidebar
+        isOpen={isChatOpen}
+        onClose={() => setIsChatOpen(false)}
+        currentWordData={searchResult}
+        onLoadSharedWord={(data) => {
+          // Load shared data into state
+          setSearchResult(data);
+
+          // Reconstruct markers/timeline logic
+          const newMarkers = [];
+          let minYear = 2024;
+
+          if (data.root) {
+            if (data.root.location) {
+              newMarkers.push({
+                ...data.root.location,
+                label: data.root.language,
+                year: data.root.year,
+                word: data.root.word,
+                country_code: data.root.location.country_code
+              });
+            }
+          }
+
+          const uniqueYears = new Set<number>();
+          if (data.root?.year) uniqueYears.add(data.root.year);
+
+          if (data.path) {
+            data.path.forEach((step: any) => {
+              if (step.location) {
+                newMarkers.push({
+                  ...step.location,
+                  label: step.language,
+                  year: step.year,
+                  word: step.word,
+                  country_code: step.location.country_code
+                });
+              }
+              if (step.year) uniqueYears.add(step.year);
+            });
+          }
+
+          if (data.current) {
+            if (data.current.location) {
+              newMarkers.push({
+                ...data.current.location,
+                label: data.current.language,
+                year: data.current.year,
+                word: data.current.word,
+                country_code: data.current.location.country_code
+              });
+            }
+            if (data.current.year) uniqueYears.add(data.current.year);
+          }
+
+          const sortedSteps = Array.from(uniqueYears).sort((a, b) => a - b);
+          setTimelineSteps(sortedSteps);
+          setMarkers(newMarkers);
+          if (sortedSteps.length > 0) {
+            setYear(sortedSteps[0]);
+            setIsPlaying(true);
+            setTimelineRange({ min: sortedSteps[0], max: sortedSteps[sortedSteps.length - 1] });
+          }
+          setHasSearched(true);
+        }}
+      />
     </main>
   );
 }
