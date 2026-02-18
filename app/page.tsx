@@ -54,6 +54,18 @@ export default function Home() {
   const [translations, setTranslations] = useState(STATIC_CONTENT);
   const [sidebarTranslations, setSidebarTranslations] = useState(SIDEBAR_CONTENT);
 
+  useEffect(() => {
+    // Check for required API keys
+    const openAIKey = localStorage.getItem('openai_api_key') || process.env.NEXT_PUBLIC_OPENAI_API_KEY;
+    const mapboxKey = localStorage.getItem('mapbox_access_token') || process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN;
+
+    if (!openAIKey || !mapboxKey) {
+      setShowSettings(true);
+      // Optional: Add a toast to explain why settings opened
+      // toast.info("Please configure your API keys to continue.");
+    }
+  }, []);
+
   const handleOpenShare = (data: any) => {
     setShareData(data);
     setShowShareModal(true);

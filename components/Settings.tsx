@@ -27,6 +27,8 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
         const storedOpenAI = localStorage.getItem('openai_api_key');
         const storedLingo = localStorage.getItem('lingo_dev_api_key');
         const storedMapbox = localStorage.getItem('mapbox_access_token');
+
+        // If localStorage has a value, use it. Otherwise, keep the env var value.
         if (storedOpenAI) setOpenaiKey(storedOpenAI);
         if (storedLingo) setLingoKey(storedLingo);
         if (storedMapbox) setMapboxKey(storedMapbox);
@@ -160,35 +162,71 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
                             <div className="space-y-4">
                                 <div>
                                     <label className="block text-[10px] font-bold text-white/40 mb-2 uppercase tracking-widest">Mapbox Access Token</label>
-                                    <input
-                                        type="password"
-                                        value={mapboxKey}
-                                        onChange={(e) => setMapboxKey(e.target.value)}
-                                        placeholder="pk.eyJ..."
-                                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-blue-500/50 transition-colors"
-                                    />
+                                    {!mapboxKey && process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN ? (
+                                        <div className="flex items-center justify-between bg-green-500/10 border border-green-500/20 rounded-xl px-4 py-2.5">
+                                            <span className="text-sm text-green-400 font-medium">✅ Configured via Environment</span>
+                                            <button
+                                                onClick={() => setMapboxKey(' ')}
+                                                className="text-[10px] text-white/40 hover:text-white underline"
+                                            >
+                                                Override
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <input
+                                            type="password"
+                                            value={mapboxKey}
+                                            onChange={(e) => setMapboxKey(e.target.value)}
+                                            placeholder="pk.eyJ..."
+                                            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-blue-500/50 transition-colors"
+                                        />
+                                    )}
                                 </div>
 
                                 <div>
                                     <label className="block text-[10px] font-bold text-white/40 mb-2 uppercase tracking-widest">OpenAI API Key</label>
-                                    <input
-                                        type="password"
-                                        value={openaiKey}
-                                        onChange={(e) => setOpenaiKey(e.target.value)}
-                                        placeholder="sk-..."
-                                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-blue-500/50 transition-colors"
-                                    />
+                                    {!openaiKey && process.env.NEXT_PUBLIC_OPENAI_API_KEY ? (
+                                        <div className="flex items-center justify-between bg-green-500/10 border border-green-500/20 rounded-xl px-4 py-2.5">
+                                            <span className="text-sm text-green-400 font-medium">✅ Configured via Environment</span>
+                                            <button
+                                                onClick={() => setOpenaiKey(' ')}
+                                                className="text-[10px] text-white/40 hover:text-white underline"
+                                            >
+                                                Override
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <input
+                                            type="password"
+                                            value={openaiKey}
+                                            onChange={(e) => setOpenaiKey(e.target.value)}
+                                            placeholder="sk-..."
+                                            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-blue-500/50 transition-colors"
+                                        />
+                                    )}
                                 </div>
 
                                 <div>
                                     <label className="block text-[10px] font-bold text-white/40 mb-2 uppercase tracking-widest">Lingo.dev API Key</label>
-                                    <input
-                                        type="password"
-                                        value={lingoKey}
-                                        onChange={(e) => setLingoKey(e.target.value)}
-                                        placeholder="lingo-..."
-                                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-blue-500/50 transition-colors"
-                                    />
+                                    {!lingoKey && process.env.NEXT_PUBLIC_LINGO_DEV_API_KEY ? (
+                                        <div className="flex items-center justify-between bg-green-500/10 border border-green-500/20 rounded-xl px-4 py-2.5">
+                                            <span className="text-sm text-green-400 font-medium">✅ Configured via Environment</span>
+                                            <button
+                                                onClick={() => setLingoKey(' ')}
+                                                className="text-[10px] text-white/40 hover:text-white underline"
+                                            >
+                                                Override
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <input
+                                            type="password"
+                                            value={lingoKey}
+                                            onChange={(e) => setLingoKey(e.target.value)}
+                                            placeholder="lingo-..."
+                                            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-blue-500/50 transition-colors"
+                                        />
+                                    )}
                                 </div>
                             </div>
 
