@@ -169,7 +169,7 @@ export default function SharePosterModal({ isOpen, onClose, data }: SharePosterM
             });
 
             const link = document.createElement('a');
-            link.download = `evolingo-${displayData.current.word}-poster.png`;
+            link.download = `etymo-${displayData.current.word}-poster.png`;
             link.href = dataUrl;
             link.click();
         } catch (error) {
@@ -191,7 +191,7 @@ export default function SharePosterModal({ isOpen, onClose, data }: SharePosterM
             `${displayData?.root?.word} (${displayData?.root?.language}) -> ` +
             `${displayData?.path?.map((s: any) => s.word).join(' -> ')} -> ` +
             `${displayData?.current?.word} (${displayData?.current?.language})\n\n` +
-            `Discover more on Evolingo!`;
+            `Discover more on Etymo!`;
 
         navigator.clipboard.writeText(text);
         setCopied(true);

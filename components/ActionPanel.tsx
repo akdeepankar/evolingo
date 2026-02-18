@@ -86,7 +86,7 @@ export default function ActionPanel({
                         onClick={onLogoClick}
                         className="font-serif font-bold text-white tracking-tighter text-2xl cursor-pointer hover:opacity-80 transition-opacity"
                     >
-                        EvoLingo
+                        Etymo
                     </motion.h1>
 
                     <div className="flex-1 flex justify-center px-6">
@@ -184,7 +184,7 @@ export default function ActionPanel({
                             onClick={onLogoClick}
                             className="font-serif font-bold text-white tracking-tighter text-3xl drop-shadow-lg cursor-pointer hover:opacity-80 transition-opacity"
                         >
-                            EvoLingo
+                            Etymo
                         </motion.h1>
 
                         {/* Language Selector Landing */}

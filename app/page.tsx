@@ -200,7 +200,7 @@ export default function Home() {
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
-        a.download = `evolingo_${searchResult?.root?.word || 'animation'}.webm`;
+        a.download = `etymo_${searchResult?.root?.word || 'animation'}.webm`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
