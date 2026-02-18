@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { ChevronLeft, ChevronRight, Bookmark, Loader2, Share2, Globe } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Bookmark, Loader2, Share2, Globe, Network } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { toast } from 'sonner';
@@ -17,6 +17,8 @@ interface SidebarProps {
     onOpenShare?: (data: any) => void;
     onToggleExploreMode?: () => void;
     isExploreMode?: boolean;
+    onToggleViewMode?: () => void;
+    viewMode?: 'globe' | 'galaxy';
 }
 
 export default function Sidebar({
@@ -27,7 +29,9 @@ export default function Sidebar({
     translations = SIDEBAR_CONTENT,
     onOpenShare,
     onToggleExploreMode,
-    isExploreMode = false
+    isExploreMode = false,
+    onToggleViewMode,
+    viewMode = 'globe'
 }: SidebarProps) {
     const [isMinimized, setIsMinimized] = useState(false);
     const [isSaved, setIsSaved] = useState(false);
@@ -185,6 +189,16 @@ export default function Sidebar({
                     <div className="flex justify-between items-start mb-2">
                         <div className="text-xs font-mono uppercase text-blue-400 tracking-widest">{translations.current}</div>
                         <div className="flex gap-1">
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    onToggleViewMode && onToggleViewMode();
+                                }}
+                                className={`p-2 rounded-lg transition-all ${viewMode === 'galaxy' ? 'bg-purple-600/20 text-purple-400' : 'hover:bg-white/10 text-white/40 hover:text-purple-400'}`}
+                                title={viewMode === 'galaxy' ? "Return to Globe" : "Enter Galaxy View"}
+                            >
+                                <Network className={`w-4 h-4 ${viewMode === 'galaxy' ? 'fill-current' : ''}`} />
+                            </button>
                             <button
                                 onClick={(e) => {
                                     e.stopPropagation();

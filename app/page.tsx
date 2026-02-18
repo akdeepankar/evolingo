@@ -1,6 +1,10 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import Link from 'next/link';
+import GalaxyView from '@/components/GalaxyView';
+
+// ... (imports)
 import Globe from '@/components/Globe';
 import Timeline from '@/components/Timeline';
 import ActionPanel from '@/components/ActionPanel';
@@ -16,7 +20,7 @@ import { translateObject } from '@/app/actions/translate';
 
 export default function Home() {
   const [year, setYear] = useState(2024);
-  const [searchResult, setSearchResult] = useState<any>(null); // Replace 'any' with proper type
+  const [searchResult, setSearchResult] = useState<any>(null);
   const [predictionResult, setPredictionResult] = useState<any>(null);
   const [markers, setMarkers] = useState<any[]>([]);
   const [timelineRange, setTimelineRange] = useState<{ min: number; max: number } | null>(null);
@@ -41,6 +45,9 @@ export default function Home() {
 
   // Explore Mode
   const [isExploreMode, setIsExploreMode] = useState(false);
+
+  // View Mode
+  const [viewMode, setViewMode] = useState<'globe' | 'galaxy'>('globe');
 
   // Translation State
   const [currentLanguage, setCurrentLanguage] = useState('en');
@@ -381,15 +388,21 @@ export default function Home() {
         onOpenShare={handleOpenShare}
         onToggleExploreMode={() => setIsExploreMode(!isExploreMode)}
         isExploreMode={isExploreMode}
+        onToggleViewMode={() => setViewMode(viewMode === 'globe' ? 'galaxy' : 'globe')}
+        viewMode={viewMode}
       />
 
       <div className="absolute inset-0 z-0">
-        <Globe
-          markers={markers}
-          year={year}
-          onMarkerClick={handleMarkerClick}
-          isExploreMode={isExploreMode}
-        />
+        {viewMode === 'globe' ? (
+          <Globe
+            markers={markers}
+            year={year}
+            onMarkerClick={handleMarkerClick}
+            isExploreMode={isExploreMode}
+          />
+        ) : (
+          <GalaxyView data={searchResult} />
+        )}
       </div>
 
       <div className="relative z-10 flex flex-col h-full pointer-events-none">

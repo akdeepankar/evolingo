@@ -22,9 +22,23 @@ export async function POST(req: Request) {
                         
                         Output Format: JSON object with the following structure:
                         {
-                            "root": { "word": string, "language": string, "meaning": string (detailed), "year": number (negative for BC), "location": { "lat": number, "lng": number, "country_code": string (ISO 2-letter code) } },
+                            "root": { 
+                                "word": string, 
+                                "language": string, 
+                                "meaning": string (detailed), 
+                                "year": number (negative for BC), 
+                                "location": { "lat": number, "lng": number, "country_code": string (ISO 2-letter code) },
+                                "related_branches": [ { "word": string, "language": string, "meaning": string } ] (2-3 cognates/siblings from this root)
+                            },
                             "path": [
-                                { "word": string, "language": string, "meaning": string (detailed), "year": number, "location": { "lat": number, "lng": number, "country_code": string (ISO 2-letter code) } }
+                                { 
+                                    "word": string, 
+                                    "language": string, 
+                                    "meaning": string (detailed), 
+                                    "year": number, 
+                                    "location": { "lat": number, "lng": number, "country_code": string (ISO 2-letter code) },
+                                    "related_branches": [ { "word": string, "language": string, "meaning": string } ] (2-3 cognates/siblings that branched off at this stage)
+                                }
                             ],
                             "current": { "word": string, "language": string, "meaning": string (detailed), "year": number, "location": { "lat": number, "lng": number, "country_code": string (ISO 2-letter code) } }
                         }
@@ -38,6 +52,7 @@ export async function POST(req: Request) {
                         6. **Cultural Insight (IMPORTANT)**: For each step (root, path items, current), include a "cultural_insight" object.
                            - Find a famous local idiom, proverb, or poetic saying from that specific language/era involving the word.
                            - Structure: { "native_idiom": string (original script), "romanized": string (optional), "meaning": string (English), "origin_story": string (brief context) }.
+                        7. **Branching Context**: For 'related_branches', strictly provide 2-3 significant words in *other* languages that share the same origin at that specific point in time (cognates). Do not list the word itself or its direct ancestor.
                         `
                     },
                     { role: "user", content: `Trace the detailed etymology of "${word}".` }
