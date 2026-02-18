@@ -8,9 +8,12 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: 'Word and year are required' }, { status: 400 });
     }
 
-    if (apiKey) {
+    const apiKeyFromEnv = process.env.OPENAI_API_KEY;
+    const effectiveApiKey = apiKey || apiKeyFromEnv;
+
+    if (effectiveApiKey) {
         try {
-            const openai = new OpenAI({ apiKey: apiKey });
+            const openai = new OpenAI({ apiKey: effectiveApiKey });
             const completion = await openai.chat.completions.create({
                 messages: [
                     {

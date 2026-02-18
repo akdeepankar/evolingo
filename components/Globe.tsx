@@ -28,8 +28,12 @@ export default function Globe({ markers = [], year = 2024, isExploreMode = false
 
     useEffect(() => {
         const storedToken = localStorage.getItem('mapbox_access_token');
+        const envToken = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN;
+
         if (storedToken) {
             setToken(storedToken);
+        } else if (envToken) {
+            setToken(envToken);
         }
         setMounted(true);
     }, []);
