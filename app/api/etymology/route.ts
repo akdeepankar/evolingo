@@ -9,8 +9,9 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: 'Word is required' }, { status: 400 });
     }
 
-    const apiKeyFromEnv = process.env.OPENAI_API_KEY;
-    const effectiveApiKey = apiKey || apiKeyFromEnv;
+    const apiKeyFromEnv = process.env.OPENAI_API_KEY || process.env.NEXT_PUBLIC_OPENAI_API_KEY;
+    // Ensure effectiveApiKey is not just whitespace from the 'Override' logic
+    const effectiveApiKey = (apiKey && apiKey.trim()) || apiKeyFromEnv;
 
     if (effectiveApiKey) {
         try {

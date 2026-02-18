@@ -8,8 +8,8 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: 'Word and year are required' }, { status: 400 });
     }
 
-    const apiKeyFromEnv = process.env.OPENAI_API_KEY;
-    const effectiveApiKey = apiKey || apiKeyFromEnv;
+    const apiKeyFromEnv = process.env.OPENAI_API_KEY || process.env.NEXT_PUBLIC_OPENAI_API_KEY;
+    const effectiveApiKey = (apiKey && apiKey.trim()) || apiKeyFromEnv;
 
     if (effectiveApiKey) {
         try {
