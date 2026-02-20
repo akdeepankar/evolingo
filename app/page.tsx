@@ -51,10 +51,24 @@ export default function Home() {
   // View Mode
   const [viewMode, setViewMode] = useState<'globe' | 'galaxy'>('globe');
 
-  // Translation State
+  // Translation State - Initialize from localStorage if available
   const [currentLanguage, setCurrentLanguage] = useState('en');
   const [translations, setTranslations] = useState(STATIC_CONTENT);
   const [sidebarTranslations, setSidebarTranslations] = useState(SIDEBAR_CONTENT);
+
+  // Initialize language from localStorage on mount
+  useEffect(() => {
+    const savedLang = localStorage.getItem('user_language');
+    if (savedLang && savedLang !== 'en') {
+      setCurrentLanguage(savedLang);
+    }
+  }, []);
+
+  // Persist language change to localStorage
+  const handleLanguageChange = (lang: string) => {
+    setCurrentLanguage(lang);
+    localStorage.setItem('user_language', lang);
+  };
 
   useEffect(() => {
     // Check for required API keys
@@ -493,7 +507,7 @@ export default function Home() {
                 setMarkers([]);
               }}
               currentLanguage={currentLanguage}
-              onLanguageChange={setCurrentLanguage}
+              onLanguageChange={handleLanguageChange}
               translations={translations}
             />
           </div>

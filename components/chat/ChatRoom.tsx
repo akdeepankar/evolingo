@@ -120,34 +120,33 @@ export default function ChatRoom({ groupId, currentWordData, onViewSharedWord, c
                 }));
 
                 const translated = await translateChat(conversation, currentLanguage);
-                const cacheKey = `chat_cache_${groupId}_${currentLanguage}`;
 
                 setTranslationMap(prev => {
                     const newMap = { ...prev };
                     translated.forEach((tMsg: any, index: number) => {
                         const originalMsg = messagesToTranslate[index];
-                        if (originalMsg && tMsg && tMsg.text) {
-                            newMap[originalMsg.id] = tMsg.text;
+                        if (originalMsg && tMsg) {
+                            // Use translated text or fallback to original to ensure it's marked as "done"
+                            newMap[originalMsg.id] = tMsg.text || originalMsg.content;
                         }
                     });
 
-                    // Update session storage inside the setter to ensure we use latest map
+                    const cacheKey = `chat_cache_${groupId}_${currentLanguage}`;
                     try {
                         sessionStorage.setItem(cacheKey, JSON.stringify(newMap));
                     } catch (e) { console.warn("Cache save failed", e); }
 
                     return newMap;
                 });
-
+            } catch (error) {
+                console.error("Auto-translation failed", error);
+            } finally {
+                // ALWAYS clear IDs from translating set, even on failure
                 setTranslatingIds(prev => {
                     const next = new Set(prev);
                     messagesToTranslate.forEach(m => next.delete(m.id));
                     return next;
                 });
-
-            } catch (error) {
-                console.error("Auto-translation failed", error);
-            } finally {
                 setIsTranslating(false);
             }
         };
