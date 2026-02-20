@@ -24,7 +24,8 @@ export default function ChatRoom({ groupId, currentWordData, onViewSharedWord, c
     const [isSharing, setIsSharing] = useState(false);
     const [savedWordKeys, setSavedWordKeys] = useState<Set<string>>(new Set());
 
-    const [translatedMessages, setTranslatedMessages] = useState<any[]>([]);
+    const [translationMap, setTranslationMap] = useState<Record<string, string>>({});
+    const [translatingIds, setTranslatingIds] = useState<Set<string>>(new Set());
     const [isTranslating, setIsTranslating] = useState(false);
 
     const CHAT_UI = {
@@ -41,12 +42,14 @@ export default function ChatRoom({ groupId, currentWordData, onViewSharedWord, c
         messagePlaceholder: "Message...",
         removedFromCollection: "Removed from collection",
         savedToCollection: "Saved to collection!",
-        sharedWordMsg: "Shared a word"
+        sharedWordMsg: "Shared a word",
+        incomingMessage: "Incoming message...",
+        translatingMessage: "translating..."
     };
 
     const [ui, setUi] = useState(CHAT_UI);
 
-    // Automatic translation effect for messages
+    // Automatic translation effect for UI elements
     useEffect(() => {
         const translateUI = async () => {
             if (currentLanguage === 'en') {
@@ -73,67 +76,75 @@ export default function ChatRoom({ groupId, currentWordData, onViewSharedWord, c
         translateUI();
     }, [currentLanguage]);
 
+    // Load initial message translation cache
+    useEffect(() => {
+        if (!groupId || currentLanguage === 'en') {
+            setTranslationMap({});
+            return;
+        }
+        const cacheKey = `chat_cache_${groupId}_${currentLanguage}`;
+        try {
+            const cachedData = sessionStorage.getItem(cacheKey);
+            if (cachedData) {
+                setTranslationMap(JSON.parse(cachedData));
+            } else {
+                setTranslationMap({});
+            }
+        } catch (e) { console.warn("Cache load failed", e); }
+    }, [groupId, currentLanguage]);
+
+    // Automatic translation effect for messages
     useEffect(() => {
         const autoTranslate = async () => {
-            if (!messages.length) return;
-            if (!currentUserId) return; // Wait for user ID to be loaded
+            if (!messages.length || !currentUserId || currentLanguage === 'en') return;
+
+            // Identify which messages need translation
+            const messagesToTranslate = messages.filter(msg =>
+                msg.user_id !== currentUserId && !translationMap[msg.id] && !translatingIds.has(msg.id)
+            );
+
+            if (messagesToTranslate.length === 0) return;
+
+            // Mark them as translating immediately
+            setTranslatingIds(prev => {
+                const next = new Set(prev);
+                messagesToTranslate.forEach(m => next.add(m.id));
+                return next;
+            });
 
             setIsTranslating(true);
             try {
+                const conversation = messagesToTranslate.map(msg => ({
+                    name: msg.profile?.display_name || 'Unknown',
+                    text: msg.content || ''
+                }));
+
+                const translated = await translateChat(conversation, currentLanguage);
                 const cacheKey = `chat_cache_${groupId}_${currentLanguage}`;
-                let translationCache: Record<string, string> = {};
 
-                try {
-                    const cachedData = sessionStorage.getItem(cacheKey);
-                    if (cachedData) {
-                        translationCache = JSON.parse(cachedData);
-                    }
-                } catch (e) { console.warn("Cache load failed", e); }
-
-                // Identify which messages need translation
-                // (Not my message AND not in cache)
-                const messagesToTranslate = messages.filter(msg =>
-                    msg.user_id !== currentUserId && !translationCache[msg.id]
-                );
-
-                if (messagesToTranslate.length > 0) {
-                    // Prepare conversation format for SDK
-                    const conversation = messagesToTranslate.map(msg => ({
-                        name: msg.profile?.display_name || 'Unknown',
-                        text: msg.content || ''
-                    }));
-
-                    const translated = await translateChat(conversation, currentLanguage);
-
-                    // Update cache
+                setTranslationMap(prev => {
+                    const newMap = { ...prev };
                     translated.forEach((tMsg: any, index: number) => {
                         const originalMsg = messagesToTranslate[index];
                         if (originalMsg && tMsg && tMsg.text) {
-                            translationCache[originalMsg.id] = tMsg.text;
+                            newMap[originalMsg.id] = tMsg.text;
                         }
                     });
 
-                    // Save cache
+                    // Update session storage inside the setter to ensure we use latest map
                     try {
-                        sessionStorage.setItem(cacheKey, JSON.stringify(translationCache));
+                        sessionStorage.setItem(cacheKey, JSON.stringify(newMap));
                     } catch (e) { console.warn("Cache save failed", e); }
-                }
 
-                // Construct view using updated cache
-                const mapped = messages.map((msg) => {
-                    if (msg.user_id === currentUserId) {
-                        return msg; // Keep my messages original
-                    }
-                    // Use cached translation if available, else fallback to original
-                    const translatedText = translationCache[msg.id];
-                    return {
-                        ...msg,
-                        content: translatedText || msg.content,
-                        original_content: msg.content
-                    };
+                    return newMap;
                 });
 
-                setTranslatedMessages(mapped);
+                setTranslatingIds(prev => {
+                    const next = new Set(prev);
+                    messagesToTranslate.forEach(m => next.delete(m.id));
+                    return next;
+                });
+
             } catch (error) {
                 console.error("Auto-translation failed", error);
             } finally {
@@ -141,9 +152,9 @@ export default function ChatRoom({ groupId, currentWordData, onViewSharedWord, c
             }
         };
 
-        const timeoutId = setTimeout(autoTranslate, 500);
+        const timeoutId = setTimeout(autoTranslate, 300);
         return () => clearTimeout(timeoutId);
-    }, [messages, currentLanguage, currentUserId, groupId]);
+    }, [messages, currentLanguage, currentUserId, groupId, translationMap, translatingIds]);
 
     useEffect(() => {
         // Get current user id
@@ -169,39 +180,30 @@ export default function ChatRoom({ groupId, currentWordData, onViewSharedWord, c
                 filter: `group_id=eq.${groupId}`
             }, async (payload) => {
                 console.log('Realtime message received:', payload);
-                // Fetch full message with profile data for the new message
                 const { data, error } = await supabase
                     .from('messages')
                     .select('*, profile:profiles(*)')
                     .eq('id', payload.new.id)
                     .single();
 
-                if (error) {
+                if (error || !data) {
                     console.error('Error fetching new message profile:', error);
                     return;
                 }
 
-                if (data) {
-                    setMessages(prev => {
-                        // Avoid duplicates if optimistic update is added later
-                        if (prev.some(m => m.id === data.id)) return prev;
-                        return [...prev, data];
-                    });
+                setMessages(prev => {
+                    if (prev.some(m => m.id === data.id)) return prev;
+                    return [...prev, data];
+                });
 
-                    // Note: Translation will happen automatically via the useEffect dependent on `messages`
-                    setTimeout(() => scrollRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
-                }
+                setTimeout(() => scrollRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
             })
-            .subscribe((status) => {
-                console.log('Realtime status:', status);
-            });
+            .subscribe();
 
         return () => {
             supabase.removeChannel(channel);
         };
     }, [groupId]);
-
-    // Auto-translation logic handled in useEffect above
 
     const fetchSavedWords = async (userId: string) => {
         const { data } = await supabase
@@ -236,7 +238,6 @@ export default function ChatRoom({ groupId, currentWordData, onViewSharedWord, c
 
         if (error) {
             toast.error('Failed to send message');
-            console.error(error);
         } else {
             setInput('');
         }
@@ -308,8 +309,6 @@ export default function ChatRoom({ groupId, currentWordData, onViewSharedWord, c
         }
     };
 
-    const displayMessages = (translatedMessages.length > 0) ? translatedMessages : messages;
-
     return (
         <div className="flex flex-col h-full bg-black/90 text-white">
             {/* Header */}
@@ -342,9 +341,11 @@ export default function ChatRoom({ groupId, currentWordData, onViewSharedWord, c
 
             {/* Messages */}
             <div className="flex-1 overflow-y-auto p-4 space-y-6 no-scrollbar">
-                {displayMessages.map((msg) => {
+                {messages.map((msg) => {
                     const isOwn = msg.user_id === currentUserId;
                     const profile = msg.profile;
+                    const isTranslatingMsg = translatingIds.has(msg.id);
+                    const translatedText = translationMap[msg.id];
 
                     return (
                         <div key={msg.id} className={`flex flex-col ${isOwn ? 'items-end' : 'items-start'}`}>
@@ -362,7 +363,22 @@ export default function ChatRoom({ groupId, currentWordData, onViewSharedWord, c
                                 ? 'bg-blue-600 text-white rounded-tr-none'
                                 : 'bg-white/10 text-white/90 rounded-tl-none'
                                 } ${msg.is_shared_word ? 'border border-blue-400/30' : ''}`}>
-                                {msg.content}
+
+                                {isTranslatingMsg ? (
+                                    <div className="flex flex-col gap-1 py-1">
+                                        <div className="flex items-center gap-2 text-white/40 italic text-xs">
+                                            <Loader2 className="w-3 h-3 animate-spin" />
+                                            {ui.incomingMessage}
+                                        </div>
+                                        <div className="text-[10px] text-white/20 uppercase tracking-tighter animate-pulse">
+                                            {ui.translatingMessage}
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <>
+                                        {translatedText || msg.content}
+                                    </>
+                                )}
                                 {msg.is_shared_word && msg.word_data && (
                                     <div className="flex gap-2 mt-3">
                                         <button
