@@ -1,11 +1,22 @@
 import { LingoDotDevEngine } from "lingo.dev/sdk";
 
-const apiKey = process.env.LINGODOTDEV_API_KEY;
+const getApiKey = () => {
+    return process.env.LINGODOTDEV_API_KEY ||
+        process.env.LINGO_DEV_API_KEY ||
+        process.env.NEXT_PUBLIC_LINGO_DEV_API_KEY ||
+        "";
+};
 
-if (!apiKey) {
-    console.warn("Warning: LINGODOTDEV_API_KEY is not defined in environment variables.");
+const apiKey = getApiKey();
+
+if (apiKey) {
+    console.log("Lingo.dev API key found and initialized.");
+} else {
+    console.warn("Warning: Lingo.dev API key is not defined in environment variables.");
 }
 
+export const isLingoEnabled = !!apiKey;
+
 export const lingoDotDev = new LingoDotDevEngine({
-    apiKey: apiKey || "",
+    apiKey: apiKey,
 });

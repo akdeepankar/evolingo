@@ -106,9 +106,9 @@ export default function ChatRoom({ groupId, currentWordData, onViewSharedWord, c
                     const translated = await translateChat(conversation, currentLanguage);
 
                     // Update cache
-                    translated.forEach((tMsg, index) => {
+                    translated.forEach((tMsg: any, index: number) => {
                         const originalMsg = messagesToTranslate[index];
-                        if (tMsg && tMsg.text) {
+                        if (originalMsg && tMsg && tMsg.text) {
                             translationCache[originalMsg.id] = tMsg.text;
                         }
                     });
