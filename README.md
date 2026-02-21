@@ -2,7 +2,9 @@
 
 **Etymo** is an immersive, 3D etymological explorer that turns the dry history of words into a vibrant, cinematic journey through time and space.
 
----
+## Demo Video 
+
+[![Etymo Video](https://img.youtube.com/vi/t0RMhiHzhTE/maxresdefault.jpg)](https://youtu.be/t0RMhiHzhTE)
 
 ## 💡 The Problem
 Etymology is the hidden DNA of human culture, yet it is often buried in dense dictionaries or static text. 
@@ -19,7 +21,7 @@ Etymo breathes life into linguistics using state-of-the-art 3D visualizations an
 *   **For Writers & Poets**: Find deeper meaning and "flavor" for words by understanding their ancient nuances and original scripts.
 *   **For Travelers**: Get cultural insights and famous local idioms for words in the region you're visiting.
 
----
+
 
 ## ✨ Key Features
 
@@ -48,7 +50,7 @@ Language is social. Join or create discussion groups with other explorers across
 - **Instant Travel**: Any group member can click on a shared word in the chat to instantly load its full 3D journey on their own Globe or Galaxy view.
 - **Private Communities**: Create invite-only groups for classrooms, book clubs, or friends using secure join codes.
 
----
+
 
 ## 🛠️ Tech Stack
 *   **Framework**: [Next.js 14](https://nextjs.org/) (App Router)
@@ -59,7 +61,6 @@ Language is social. Join or create discussion groups with other explorers across
 *   **I18n**: [Lingo.dev](https://lingo.dev/)
 
 
----
 
 ## 🌍 Internationalization with lingo.dev
 
@@ -89,7 +90,6 @@ const translatedData = await lingoDotDev.localizeObject(etymologyResult, {
 });
 ```
 
----
 
 ## 🛠️ Getting Started
 
@@ -112,7 +112,7 @@ const translatedData = await lingoDotDev.localizeObject(etymologyResult, {
     npm run dev
     ```
 
----
+
 
 ## 🛸 Dive into the DNA of Language. 
 **Explore Etymo today.**
