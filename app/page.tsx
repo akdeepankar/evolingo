@@ -10,7 +10,6 @@ import Timeline from '@/components/Timeline';
 import ActionPanel from '@/components/ActionPanel';
 import Settings from '@/components/Settings';
 import Sidebar from '@/components/Sidebar';
-import FuturePrediction from '@/components/results/FuturePrediction';
 import ChatSidebar from '@/components/chat/ChatSidebar';
 import SavedCollection from '@/components/chat/SavedCollection';
 import CulturalInsightModal from '@/components/CulturalInsightModal';
@@ -22,8 +21,6 @@ export default function Home() {
   const [year, setYear] = useState(2024);
   const [searchResult, setSearchResult] = useState<any>(null);
   const [translatedSearchResult, setTranslatedSearchResult] = useState<any>(null);
-  const [predictionResult, setPredictionResult] = useState<any>(null);
-  const [translatedPredictionResult, setTranslatedPredictionResult] = useState<any>(null);
   const [markers, setMarkers] = useState<any[]>([]);
   const [timelineRange, setTimelineRange] = useState<{ min: number; max: number } | null>(null);
   const [timelineSteps, setTimelineSteps] = useState<number[]>([]);
@@ -205,30 +202,6 @@ export default function Home() {
     translateResult();
   }, [searchResult, currentLanguage]);
 
-  // Translate predictions
-  useEffect(() => {
-    const translatePrediction = async () => {
-      if (!predictionResult) {
-        setTranslatedPredictionResult(null);
-        return;
-      }
-
-      if (currentLanguage === 'en') {
-        setTranslatedPredictionResult(predictionResult);
-        return;
-      }
-
-      try {
-        const translated = await translateObject(predictionResult, currentLanguage);
-        setTranslatedPredictionResult(translated);
-      } catch (err) {
-        console.error("Failed to translate prediction:", err);
-        setTranslatedPredictionResult(predictionResult);
-      }
-    };
-
-    translatePrediction();
-  }, [predictionResult, currentLanguage]);
 
   // Playback Logic
   const [playbackSpeed, setPlaybackSpeed] = useState<'1x' | '0.5x'>('1x');
@@ -409,7 +382,6 @@ export default function Home() {
 
     // Reset results
     setSearchResult(null);
-    setPredictionResult(null);
     setMarkers([]);
     setTimelineRange(null);
     setTimelineSteps([]);
@@ -433,18 +405,6 @@ export default function Home() {
         console.error("Etymology fetch failed");
       }
 
-      const predictionRes = await fetch('/api/predict', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ word: term, year: 2050, apiKey: openaiKey })
-      });
-
-      if (predictionRes.ok) {
-        const predictionData = await predictionRes.json();
-        setPredictionResult(predictionData);
-      } else {
-        console.error("Prediction fetch failed");
-      }
 
     } catch (error) {
       console.error("Failed to fetch data", error);
@@ -516,11 +476,6 @@ export default function Home() {
 
         {/* Results Area - Future styling can function similarly to Sidebar or float */}
         <div className="flex-1 w-full flex justify-end p-10 pointer-events-none">
-          {year > 2024 && (translatedPredictionResult || predictionResult) && (
-            <div className="pointer-events-auto">
-              <FuturePrediction data={{ ...(translatedPredictionResult || predictionResult), year }} />
-            </div>
-          )}
         </div>
 
         <div className="pointer-events-auto pb-10">

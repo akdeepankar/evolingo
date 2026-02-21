@@ -37,21 +37,19 @@ Switch to a 3D "Language Constellation." The root stays at the center, while bra
 ### 3. ⏳ Path Animation & Time Travel
 Use the timeline to "play" the history of a word. Watch it evolve from its earliest known form to its modern usage, step by chronological step.
 
-### 4. 🔮 Future Predictions
-Powered by AI, Etymo predicts how a word might evolve in the next 100 years based on current linguistic trends and cultural shifts.
-
-### 5. 🏮 Cultural Insights
+### 4. 🏮 Cultural Insights
 Beyond just definitions, get unique cultural idioms, proverbs, and "origin stories" for every stage of a word's life.
 
-### 6. 🎨 Shareable Posters
+### 5. 🎨 Shareable Posters
 Generate beautiful, minimalist posters of a word’s journey to share on social media or save to your personal collection.
 
-### 7. 💬 Word Discussion Groups
-Language is social. Join or create discussion groups with other explorers across the globe.
-- **Real-time Collaboration**: Discuss etymological findings in real-time.
-- **Interactive Word Sharing**: Share a word's unique path directly into the chat.
-- **Instant Travel**: Any group member can click on a shared word in the chat to instantly load its full 3D journey on their own Globe or Galaxy view.
-- **Private Communities**: Create invite-only groups for classrooms, book clubs, or friends using secure join codes.
+### 6. 💬 Collaborative Discussion Groups
+Language is social. Connect with other explorers to trace the history of words together.
+- **Create & Lead**: Start your own research community. The app generates a unique **6-digit join code** (e.g., `X8J2P`) that you can share with friends or students.
+- **Join with Ease**: Enter a group code to instantly jump into an existing conversation and start contributing.
+- **Interactive Research Sharing**: Found a fascinating journey for "Robot"? Share it directly into the chat. Other members can see a summary of your findings instantly.
+- **Synchronized Exploration**: Any group member can click on a shared word in the chat to instantly load its full 3D journey on their own Globe or Galaxy view, allowing for real-time collaborative analysis.
+- **Global Collaboration**: Discuss etymological findings in real-time with people across different cultures and languages.
 
 
 
